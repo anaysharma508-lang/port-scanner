@@ -108,15 +108,9 @@ Learnings:
  Most importantly: building systems teaches more than reading about them.
 
 
-
-Author Intent
-
-This project is part of a practical cybersecurity learning path focused on:
-
-building tools
-
-understanding networks
-
-thinking in monitoring and visibility
-
-shipping real implementations instead of theory-only work
+#Author Intent
+ This project is part of a practical cybersecurity learning path focused on:
+  building tools
+  understanding networks
+  thinking in monitoring and visibility
+  shipping real implementations instead of theory-only work
