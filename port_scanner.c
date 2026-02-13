@@ -25,10 +25,10 @@ parallel scanning, configurable timeouts, or alternative probing techniques.
 // Example timestamp: 2026-02-09T21:45:30Z
 //1st we declares a function that returns a pointer to a string (const char *)
 const char *timestamp_utc(){
-    static char buf[32];//persistent output buffer
+    static char buf[32];//array buf[32] will store our timestamp text 
     time_t now=time(NULL);// current system time fetched from system in raw seconds
-    struct tm *utc=gmtime(&now);// gmtime converts the address of now into broken down utc
-    strftime(buf, sizeof(buf),"%Y-%m-%dT%H:%M:%SZ", utc); //convert a struct tm into a human readable  ip
+    struct tm *utc=gmtime(&now);// gmtime converts the address of now into broken down utc(year,month,day,hour,etc)
+    strftime(buf, sizeof(buf),"%Y-%m-%dT%H:%M:%SZ", utc); //formats a structured time into a readable time string
     return buf;
 }
 
