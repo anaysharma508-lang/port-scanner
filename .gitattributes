@@ -1,2 +1,19 @@
-# Auto detect text files and perform LF normalization
+# Normalize text files
 * text=auto
+
+# C language files
+*.c text eol=lf diff=c
+*.h text eol=lf diff=c
+
+# Documentation
+*.md text eol=lf
+
+# Scripts
+*.sh text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
