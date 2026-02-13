@@ -1,3 +1,4 @@
+//TCP port scanner Author:Anay Sharma
 /*This is a TCP connect()-based port scanner written in C. It uses non-blocking
 sockets with explicit timeouts to safely probe a target across a user-defined
 port range.Each connection attempt is classified into meaningful TCP states
