@@ -47,7 +47,7 @@ const char *port_state(int err){
 int main(int argc, char *argv[]) {
     if(argc!=4){
         fprintf(stderr,"Usage:%s <IP> <START_PORT> <END_PORT>\n", argv[0]);
-        return 1; // exit with error
+        return 1; // exit with error code 1 
     }
     char *target_ip=argv[1];// Read target IP address from command line
     int start_port=atoi(argv[2]); // Convert starting and ending ports from string to integer
@@ -57,8 +57,8 @@ int main(int argc, char *argv[]) {
         return 1; // exit on invalid input
     }
     printf("timestamp,ip,port,state\n");//Print CSV(comma seperated values)header for structured and machine-readable output
-   for(int port=start_port;port<=end_port;port++) {
-        int sockfd = socket(AF_INET, SOCK_STREAM, 0); //Create a TCP socket...AF_INET= Address family SOCK_STREAM=Socket Type
+   for(int port=start_port;port<=end_port;port++){
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0); //Create a TCP socket...AF_INET= Address family here is IPv4 SOCK_STREAM=Socket Type here it is TCP 
         if (sockfd < 0)
             continue; // skip this port if socket creation fails
         if (fcntl(sockfd, F_SETFL,O_NONBLOCK) < 0)// Set socket to non-blocking mode so connect() does not stall the scan
