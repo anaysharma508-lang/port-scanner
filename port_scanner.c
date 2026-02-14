@@ -49,28 +49,27 @@ int main(int argc, char *argv[]) {
         fprintf(stderr,"Usage:%s <IP> <START_PORT> <END_PORT>\n", argv[0]);
         return 1; // exit with error code 1 
     }
-    char *target_ip=argv[1];// Read target IP address from command line
-    int start_port=atoi(argv[2]); // Convert starting and ending ports from string to integer
+    char *target_ip=argv[1];//IP address is stored as string in the memory we used a pointer at the variable target_ip access to that memory location
+    int start_port=atoi(argv[2]); //atoi helps to convert starting and ending ports from ASCII numeric string to integer
     int end_port=atoi(argv[3]);
     if (start_port<1 || end_port>65535 || start_port>end_port){
-        fprintf(stderr, "Invalid port range\n");
-        return 1; // exit on invalid input
+        fprintf(stderr,"Invalid port range\n");
+        return 1; //exit on invalid input
     }
     printf("timestamp,ip,port,state\n");//Print CSV(comma seperated values)header for structured and machine-readable output
    for(int port=start_port;port<=end_port;port++){
-        int sockfd = socket(AF_INET, SOCK_STREAM, 0); //Create a TCP socket...AF_INET= Address family here is IPv4 SOCK_STREAM=Socket Type here it is TCP 
-        if (sockfd < 0)
+        int sockfd=socket(AF_INET,SOCK_STREAM,0); //Create a TCP socket...AF_INET= Address family here is IPv4 SOCK_STREAM=Socket Type here it is TCP 
+        if(sockfd==-1)//-1 is the code returned for if socket creation fails 
             continue; // skip this port if socket creation fails
-        if (fcntl(sockfd, F_SETFL,O_NONBLOCK) < 0)// Set socket to non-blocking mode so connect() does not stall the scan
+        if(fcntl(sockfd, F_SETFL,O_NONBLOCK)==-1)//Set socket to non-blocking mode so connect() does not stall the scan
         {
-            close(sockfd); // discard socket if configuration fails
+            close(sockfd); //discard socket if configuration fails
             continue;
         }
       struct sockaddr_in target={0}; //Create and zero initialize an IPv4 socket address structure
-      target.sin_family=AF_INET; //Specify that we use IPv4 address
+      target.sin_family=AF_INET;//Specify that we use IPv4 address
       target.sin_port=htons(port);//Convert port number from host byte order to network byte order
       //Convert human readable IP string to binary form and store in the target.sin_addr
-      // inet_pton returns:
       //1 mean success 0 mean invalid address string -1 means error 
       if(inet_pton(AF_INET, target_ip,&target.sin_addr)!=1){
       fprintf(stderr, "Invalid IP address\n");
@@ -80,7 +79,7 @@ int main(int argc, char *argv[]) {
    int err = 0;//Variable to store final connection error/status
    //Attempt tcp connection to target address
    if (connect(sockfd,(struct sockaddr*)&target,sizeof(target))<0){
-      if (errno==EINPROGRESS) {
+      if(errno==EINPROGRESS){
         fd_set wfds;//structure used by select() to monitor sockets
         FD_ZERO(&wfds);//clear the set (always before using)
         FD_SET(sockfd, &wfds);//add our socket to the "write " monitoring set
@@ -109,4 +108,18 @@ close(sockfd);
     // Successful program termination
     return 0;
 }
-
+/*associated with <netinet/in.h> file 
+struct sockaddr_in{
+    sa_family_t sin_family;     
+     // Address family identifier (e.g., AF_INET for IPv4).
+     // Tells the kernel how to interpret the structure.
+    in_port_t sin_port;         
+     // Transport-layer port number in NETWORK BYTE ORDER.
+     // Must use htons() when assigning.
+    struct in_addr sin_addr;    
+     // IPv4 address stored in binary form (32-bit).
+     // Typically filled via inet_pton().
+    char sin_zero[8];           
+     // Unused padding bytes.
+     // Ensures size compatibility with struct sockaddr.
+};*/
