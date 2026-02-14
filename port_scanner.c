@@ -69,8 +69,8 @@ int main(int argc, char *argv[]) {
       struct sockaddr_in target={0}; //Create and zero initialize an IPv4 socket address structure
       target.sin_family=AF_INET;//Specify that we use IPv4 address
       target.sin_port=htons(port);//Convert port number from host byte order to network byte order
-      //Convert human readable IP string to binary form and store in the target.sin_addr
-      //1 mean success 0 mean invalid address string -1 means error 
+      //inet_pton:convert human readable IP string to binary form and store in the target.sin_addr
+      //1=success 0=invalid address string -1=error 
       if(inet_pton(AF_INET, target_ip,&target.sin_addr)!=1){
       fprintf(stderr, "Invalid IP address\n");
       close(sockfd);
