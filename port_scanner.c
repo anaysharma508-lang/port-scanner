@@ -53,13 +53,13 @@ int main(int argc, char *argv[]) {
     int start_port=atoi(argv[2]);//atoi converts ascii based string to integer 
     int end_port=atoi(argv[3]);
 
-    if(start_port <1 || end_port>65535 || start_port>end_port) {
+    if(start_port<1 || end_port>65535 || start_port>end_port) {
         fprintf(stderr,"Invalid port range\n");
         return 1;
     }
     printf("timestamp,ip,port,state\n");
     for (int port =start_port;port<=end_port;port++)
-        {
+        
         int sockfd=socket(AF_INET,SOCK_STREAM,0);//socket creation in this line....AF_INET=IPv4....SOCK_STREAM=TCP
         if (sockfd==-1) //-1 means socket creation failure 
             continue;
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
         target.sin_family=AF_INET;// pecify address family as IPv4
         target.sin_port=htons(port);//Convert port to network byte order and assign it
 
-        if(inet_pton(AF_INET, target_ip, &target.sin_addr)!=1)// Convert human-readable IPv4 string into binary format for socket; 1=success,0=invalid string,-1=error
+        if(inet_pton(AF_INET,target_ip, &target.sin_addr)!=1)// Convert human-readable IPv4 string into binary format for socket; 1=success,0=invalid string,-1=error
         {
             fprintf(stderr, "Invalid IP address\n");
             close(sockfd);
