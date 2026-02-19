@@ -12,7 +12,7 @@ parallel scanning, configurable timeouts, or alternative probing techniques.
 #include <stdio.h> //Output scan results
 #include <stdlib.h> //Basic utilities (argument parsing)
 #include <unistd.h>  //POSIX functions (close, read/write)
-#include <errno.h> //TCP error codes for connection state detection
+#include <errno.h> //TCP error codes for connection state 
 #include <string.h> //Memory utilities 
 #include <fcntl.h>  //Non-blocking socket control
 #include <time.h>   //UTC timestamp generation
