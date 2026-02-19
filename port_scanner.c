@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     printf("timestamp,ip,port,state\n");
-    for (int port =start_port;port<=end_port;port++)
+    for (int port=start_port;port<=end_port;port++)
         
         int sockfd=socket(AF_INET,SOCK_STREAM,0);//socket creation in this line....AF_INET=IPv4....SOCK_STREAM=TCP
         if (sockfd==-1) //-1 means socket creation failure 
