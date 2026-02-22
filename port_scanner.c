@@ -136,3 +136,4 @@ struct sockaddr_in{
      // Ensures size compatibility with struct sockaddr.
 };*/
 // target.sin_family target.sin_port.....target is container sin_family & sin_port are variables 
+//NETWORK BYTE ORDER:Network protocols (TCP,UDP) define a specific standard byte order so that computers with different architectures can communicate reliably.
