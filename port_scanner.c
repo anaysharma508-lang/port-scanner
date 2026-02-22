@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     printf("timestamp,ip,port,state\n");
-    for (int port=start_port;port<=end_port;port++)
-        
+    
+    for (int port=start_port;port<=end_port;port++){
         int sockfd=socket(AF_INET,SOCK_STREAM,0);//socket creation in this line....AF_INET=IPv4....SOCK_STREAM=TCP
         if (sockfd==-1) //-1 means socket creation failure 
             continue;
@@ -71,8 +71,9 @@ int main(int argc, char *argv[]) {
         struct sockaddr_in target={0};//create IPv4 socket address structure and initialize all fields to zero
         target.sin_family=AF_INET;// pecify address family as IPv4
         target.sin_port=htons(port);//Convert port to network byte order and assign it
-
-        if(inet_pton(AF_INET,target_ip, &target.sin_addr)!=1)// Convert human-readable IPv4 string into binary format for socket; 1=success,0=invalid string,-1=error
+    }
+        
+    if(inet_pton(AF_INET,target_ip, &target.sin_addr)!=1)// Convert human-readable IPv4 string into binary format for socket; 1=success,0=invalid string,-1=error
         {
             fprintf(stderr, "Invalid IP address\n");
             close(sockfd);
