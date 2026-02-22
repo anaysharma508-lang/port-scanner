@@ -125,16 +125,13 @@ int main(int argc, char *argv[]) {
 /*associated with <netinet/in.h> file 
 struct sockaddr_in{
     sa_family_t sin_family;     
-     // Address family identifier (e.g., AF_INET for IPv4).
-     // Tells the kernel how to interpret the structure.
-    in_port_t sin_port;         
-     // Transport-layer port number in NETWORK BYTE ORDER.
-     // Must use htons() when assigning.
+     //sa_family:data type....specifies ip address type....IPv4:AF_INET...IPv6:AF_INET6...kernel knows from here how to interpret structure 
+    in_port_t sin_port;        
+    //in_port_t:data type for TCP/UDP ports...sin_port:the variable of type in_port_t that stores the TCP/UDP port number(use htons() to assign)
     struct in_addr sin_addr;    
-     // IPv4 address stored in binary form (32-bit).
-     // Typically filled via inet_pton().
+     //struct in_addr:data type that stores an IPv4 address in binary form (32 bits)
+    //sin_addr is the variable name where it is the storage location inside the struct sockaddr_in where the IPv4 address is kept
     char sin_zero[8];           
-     // Unused padding bytes.
      // Ensures size compatibility with struct sockaddr.
 };*/
 // target.sin_family target.sin_port.....target is container sin_family & sin_port are variables 
