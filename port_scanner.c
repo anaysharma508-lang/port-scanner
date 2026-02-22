@@ -103,17 +103,17 @@ int main(int argc, char *argv[]) {
                //retrieve the final connection status from the socket
              //if getsockopt itself fails,store the error in err
             }
-            else if (sel == 0)
+            else if(sel==0)
             {
-                err = ETIMEDOUT;   // Timeout → FILTERED
+                err=ETIMEDOUT;   //Timeout→FILTERED
             }
             else 
             {
-              err=errno;       // select() failure
+              err=errno;       //select() failure
             }
         }
         else {
-             err=saved_errno;     // Immediate failure
+             err=saved_errno;     //Immediate failure
 
         }
         printf("%s,%s,%d,%s\n",timestamp_utc(),target_ip,port,port_state(err));
