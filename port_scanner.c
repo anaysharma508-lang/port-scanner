@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
 
        if (rc==0)//if connect() succeeded
         {
-           err=0; //Immediate success → OPEN
+           err=0; //Immediate success-->OPEN
         }
         else if (saved_errno == EINPROGRESS) 
            {
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
             }
             else if(sel==0)
             {
-                err=ETIMEDOUT;   //Timeout→FILTERED
+                err=ETIMEDOUT;   //Timeout-->FILTERED
             }
             else 
             {
