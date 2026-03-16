@@ -12,21 +12,21 @@ parallel scanning, configurable timeouts, or alternative probing techniques.
 #include <stdio.h> //Output scan results
 #include <stdlib.h> //Basic utilities (argument parsing)
 #include <unistd.h>  //POSIX functions (close, read/write)
-#include <errno.h> //TCP error codes for connection state 
-#include <string.h> //Memory utilities 
+#include <errno.h> //TCP error codes for connection state detection
+#include <string.h> //Memory utilities (memset)
 #include <fcntl.h>  //Non-blocking socket control
 #include <time.h>   //UTC timestamp generation
 #include <sys/socket.h>//Socket creation and connection APIs
 #include <sys/time.h>  //Timeout handling with select()
 #include <arpa/inet.h> //IPv4 address conversion
 #include <netinet/in.h> //IPv4 socket address structures
-#define TIMEOUT_SEC 1     // TCP connection timeout (seconds)
+#define TIMEOUT_SEC 2     // TCP connection timeout (seconds)
 
 
 // Example timestamp: 2026-02-09T21:45:30Z
 //1st we declares a function that returns a pointer to a string (const char *)
 const char *timestamp_utc(){
-    static char buf[32];//array buf[32] will store our timestamp text 
+    static char buf[32];//array buf[32] will store our timestamp text
     time_t now=time(NULL);// current system time fetched from system in raw seconds
     struct tm *utc=gmtime(&now);// gmtime converts the address of now into broken down utc(year,month,day,hour,etc)
     strftime(buf, sizeof(buf),"%Y-%m-%dT%H:%M:%SZ", utc); //formats a structured time into a readable time string
@@ -42,98 +42,68 @@ const char *port_state(int err){
     if (err==EHOSTUNREACH || err==ENETUNREACH) return "unreachable"; //host or network is not reachable
     return "unknown";//unhandled or unexpected error
 }
-
-
 int main(int argc, char *argv[]) {
     if(argc!=4){
-        fprintf(stderr,"Usage: %s <IP> <START_PORT> <END_PORT>\n",argv[0]);
-        return 1;
+        fprintf(stderr,"Usage:%s <IP> <START_PORT> <END_PORT>\n", argv[0]);
+        return 1; // exit with error code 1
     }
-    char *target_ip=argv[1];//IP address is a string argument; target_ip stores a pointer to that string from argv
-    int start_port=atoi(argv[2]);//atoi converts ascii based string to integer 
+    char *target_ip=argv[1];// Read target IP address from command line
+    int start_port=atoi(argv[2]); // Convert starting and ending ports from string to integer
     int end_port=atoi(argv[3]);
-
-    if(start_port<1 || end_port>65535 || start_port>end_port) {
-        fprintf(stderr,"Invalid port range\n");
-        return 1;
+    if (start_port<1 || end_port>65535 || start_port>end_port){
+        fprintf(stderr, "Invalid port range\n");
+        return 1; // exit on invalid input
     }
-    printf("timestamp,ip,port,state\n");
-    
-    for (int port=start_port;port<=end_port;port++){
-        int sockfd=socket(AF_INET,SOCK_STREAM,0);//socket creation in this line....AF_INET=IPv4....SOCK_STREAM=TCP
-        if (sockfd==-1) //-1 means socket creation failure 
-            continue;
-        if (fcntl(sockfd,F_SETFL,O_NONBLOCK)==-1)//feature for nonblocking by fcntl(file control)..F_SETFL=Set file status flags...O_NONBLOCK=do not block
+    printf("timestamp,ip,port,state\n");//Print CSV(comma seperated values)header for structured and machine-readable output
+   for(int port=start_port;port<=end_port;port++){
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0); //Create a TCP socket...AF_INET= Address family here is IPv4 SOCK_STREAM=Socket Type here it is TCP
+        if (sockfd < 0)
+            continue; // skip this port if socket creation fails
+        if (fcntl(sockfd, F_SETFL,O_NONBLOCK)<0)// Set socket to non-blocking mode so connect() does not stall the scan
         {
-            close(sockfd);
+            close(sockfd); // discard socket if configuration fails
             continue;
         }
-        struct sockaddr_in target={0};//create IPv4 socket address structure and initialize all fields to zero
-        target.sin_family=AF_INET;// pecify address family as IPv4
-        target.sin_port=htons(port);//Convert port to network byte order and assign it
+      struct sockaddr_in target={0}; //Create and zero initialize an IPv4 socket address structure
+      target.sin_family=AF_INET; //Specify that we use IPv4 address
+      target.sin_port=htons(port);//Convert port number from host byte order to network byte order
+      //Convert human readable IP string to binary form and store in the target.sin_addr
+      // inet_pton returns:
+      //1 mean success 0 mean invalid address string -1 means error
+    struct in_addr resolved_addr;
+    if(inet_pton(AF_INET, target_ip, &resolved_addr) != 1){
+    fprintf(stderr, "Invalid IP address\n");
+    return 1;
+   }
+   int err = 0;//Variable to store final connection error/status
+   //Attempt tcp connection to target address
+   if (connect(sockfd,(struct sockaddr*)&target,sizeof(target))<0){
+      if (errno==EINPROGRESS) {
+        fd_set wfds;//structure used by select() to monitor sockets
+        FD_ZERO(&wfds);//clear the set (always before using)
+        FD_SET(sockfd, &wfds);//add our socket to the "write " monitoring set
+        struct timeval tv={TIMEOUT_SEC,0};
+        //Wait Until:
+       //Socket becomes writable(connection finished)
+       //timeout occurs
+        if(select(sockfd + 1,NULL,&wfds,NULL,&tv)>0){
+            //length variable required by getsockopt()
+            socklen_t len=sizeof(err);
+            //retrieve final connection from socket
+            //SO_ERROR tells us whether connection succeded or failed
+            getsockopt(sockfd,SOL_SOCKET,SO_ERROR,&err,&len);
+        }else{
+            err = ETIMEDOUT;//select() timed out which is treated as connection timeout
+        }
+
+    }else{
+        err=errno;//connect() failed immediately(eg:connection refused)
     }
-        
-    if(inet_pton(AF_INET,target_ip, &target.sin_addr)!=1)// Convert human-readable IPv4 string into binary format for socket; 1=success,0=invalid string,-1=error
-        {
-            fprintf(stderr, "Invalid IP address\n");
-            close(sockfd);
-            break;
-        }
-        int err=0;//stores the final connection result....0=success, non-zero=socket error code.
-        int rc=connect(sockfd,(struct sockaddr*)&target,sizeof(target));// TCP connection attempt to the target IP and port.
-        int saved_errno=errno;// Save the current errno value immediately after connect().
+}
+ printf("%s,%s,%d,%s\n",timestamp_utc(),target_ip,port,port_state(err));
 
-       if (rc==0)//if connect() succeeded
-        {
-           err=0; //Immediate success-->OPEN
-        }
-        else if (saved_errno == EINPROGRESS) 
-           {
-            fd_set wfds;//set of file descriptors declared to monitor for writability (used by select())
-            FD_ZERO(&wfds);// Clear the descriptor set to remove any previous data (always do this before using)
-            FD_SET(sockfd,&wfds);//Add our socket file descriptor to the set-we want to know when it becomes writable
-            struct timeval tv={TIMEOUT_SEC,0};//// Set the maximum time select() should wait: TIMEOUT_SEC seconds,
-            int sel=select(sockfd + 1, NULL, &wfds, NULL, &tv);// Wait for the socket to become writable or for timeout to expire....return>0 if socket is ready, 0 if timeout,-1 on error
-           if (sel>0)
-           {
-                //Socket became writable before timeout → connection finished (success or failure)
-                socklen_t len=sizeof(err);
-                //prepare length variable for getsockopt()
-                if(getsockopt(sockfd,SOL_SOCKET,SO_ERROR,&err,&len)<0)
-                    err=errno;
-               //retrieve the final connection status from the socket
-             //if getsockopt itself fails,store the error in err
-            }
-            else if(sel==0)
-            {
-                err=ETIMEDOUT;   //Timeout-->FILTERED
-            }
-            else 
-            {
-              err=errno;       //select() failure
-            }
-        }
-        else {
-             err=saved_errno;     //Immediate failure
-
-        }
-        printf("%s,%s,%d,%s\n",timestamp_utc(),target_ip,port,port_state(err));
-        close(sockfd);
-    }
-
+close(sockfd);
+}
+    // Successful program termination
     return 0;
 }
-/*associated with <netinet/in.h> file 
-struct sockaddr_in{
-    sa_family_t sin_family;     
-     //sa_family:data type....specifies ip address type....IPv4:AF_INET...IPv6:AF_INET6...kernel knows from here how to interpret structure 
-    in_port_t sin_port;        
-    //in_port_t:data type for TCP/UDP ports...sin_port:the variable of type in_port_t that stores the TCP/UDP port number(use htons() to assign)
-    struct in_addr sin_addr;    
-     //struct in_addr:data type that stores an IPv4 address in binary form (32 bits)
-    //sin_addr is the variable name where it is the storage location inside the struct sockaddr_in where the IPv4 address is kept
-    char sin_zero[8];           
-     // Ensures size compatibility with struct sockaddr.
-};*/
-// target.sin_family target.sin_port.....target is container sin_family & sin_port are variables 
-//NETWORK BYTE ORDER:Network protocols (TCP,UDP) define a specific standard byte order so that computers with different architectures can communicate reliably.
